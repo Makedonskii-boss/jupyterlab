@@ -1521,7 +1521,7 @@ export class WindowedList<
       return;
     }
     this.scrollToItem(...this._scrollToItem).catch(reason => {
-      console.log(reason);
+      console.warn('Failed to scroll to item after resize:', reason);
     });
   }
 
