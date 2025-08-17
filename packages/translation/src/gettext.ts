@@ -545,22 +545,48 @@ class Gettext {
     // taken from https://github.com/Orange-OpenSource/gettext.js/blob/master/lib.gettext.js
     // plural forms list available here http://localization-guide.readthedocs.org/en/latest/l10n/pluralforms.html
     let pf_re = new RegExp(
-      '^\\s*nplurals\\s*=\\s*[0-9]+\\s*;\\s*plural\\s*=\\s*(?:\\s|[-\\?\\|&=!<>+*/%:;n0-9_()])+'
+      '^\\s*nplurals\\s*=\\s*[0-9]+\\s*;\\s*plural\\s*=\\s*(?:\\s|[-\\?|&=!<>+*/%:;n0-9_()])+'
     );
 
-    if (!pf_re.test(pluralForm))
+    const candidate = (pluralForm ?? '').trim();
+
+    if (!pf_re.test(candidate))
       throw new Error(
         Gettext.strfmt('The plural form "%1" is not valid', pluralForm)
       );
 
+    // Additional sanitization: forbid forbidden keywords and characters
+    // beyond what is strictly necessary to compute plural index from "n".
+    // This is a best-effort guard against code execution risks.
+    const forbiddenPatterns = [
+      /[A-Za-z]/g, // Only allow the identifier "n"; any other letters are disallowed below except in "nplurals" and "plural" keys
+      /[`'"]/, // no string literals
+      /\bfunction\b|\bconstructor\b|=>|\bnew\b|\bthis\b|\bglobal\b|\bwindow\b|\beval\b|\bimport\b/i
+    ];
+
+    // Allow letters only in the two parameter names "nplurals" and "plural"
+    const candidateWithoutKeys = candidate
+      .replace(/nplurals\s*=\s*[0-9]+\s*;/g, '')
+      .replace(/plural\s*=\s*/g, '');
+
+    // Permit the variable "n" in the plural expression by stripping it prior to checks
+    const candidateWithoutKeysAllowingN = candidateWithoutKeys.replace(/\bn\b/g, '');
+
+    for (const pat of forbiddenPatterns) {
+      if (pat.test(candidateWithoutKeysAllowingN)) {
+        throw new Error(
+          Gettext.strfmt('The plural form "%1" contains forbidden constructs', pluralForm)
+        );
+      }
+    }
+
     // Careful here, this is a hidden eval() equivalent..
     // Risk should be reasonable though since we test the pluralForm through regex before
     // taken from https://github.com/Orange-OpenSource/gettext.js/blob/master/lib.gettext.js
-    // TODO: should test if https://github.com/soney/jsep present and use it if so
     return new Function(
       'n',
       'let plural, nplurals; ' +
-        pluralForm +
+        candidate +
         ' return { nplurals: nplurals, plural: (plural === true ? 1 : (plural ? plural : 0)) };'
     );
   }

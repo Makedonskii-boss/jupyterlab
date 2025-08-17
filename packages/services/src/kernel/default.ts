@@ -1230,8 +1230,8 @@ export class KernelConnection implements Kernel.IKernelConnection {
 
     // Add to our map of display ids for this message.
     const displayIds = this._msgIdToDisplayIds.get(msgId) ?? [];
-    if (displayIds.indexOf(msgId) === -1) {
-      displayIds.push(msgId);
+    if (displayIds.indexOf(displayId) === -1) {
+      displayIds.push(displayId);
     }
     this._msgIdToDisplayIds.set(msgId, displayIds);
 
@@ -1742,7 +1742,7 @@ export class KernelConnection implements Kernel.IKernelConnection {
       this._ws!.protocol !== '' &&
       !this._supportedProtocols.includes(this._ws!.protocol)
     ) {
-      console.log(
+      console.warn(
         'Server selected unknown kernel wire protocol:',
         this._ws!.protocol
       );

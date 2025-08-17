@@ -453,7 +453,7 @@ export class PluginListModel extends VDomModel {
       try {
         data = JSON.parse(data);
       } catch (error) {
-        console.log('Not a JSON response body.', response);
+        console.warn('Not a JSON response body.', response);
       }
     }
 
