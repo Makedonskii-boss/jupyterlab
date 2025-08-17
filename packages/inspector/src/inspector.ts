@@ -9,6 +9,7 @@ import {
 } from '@jupyterlab/translation';
 import { Panel, PanelLayout, Widget } from '@lumino/widgets';
 import { IInspector } from './tokens';
+import { Sanitizer } from '@jupyterlab/apputils';
 
 /**
  * The class name added to inspector panels.
@@ -147,7 +148,8 @@ export class InspectorPanel
    */
   private static _generateContentWidget(message: string): Widget {
     const widget = new Widget();
-    widget.node.innerHTML = message;
+    const sanitizer = new Sanitizer();
+    widget.node.innerHTML = sanitizer.sanitize(message);
     widget.addClass(CONTENT_CLASS);
     widget.addClass(DEFAULT_CONTENT_CLASS);
 
